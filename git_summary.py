@@ -215,7 +215,11 @@ class GitRepo:
         self.path = path
         self.name = name
         self.repo = Repo(os.path.join(self.path, self.name))
-        self.branch_name = self.repo.active_branch.name
+        try:
+            self.branch_name = self.repo.active_branch.name
+        except TypeError:
+            # Probably a detached head
+            self.branch_name = '--- detached? ---'
 
         # A git repo can be initialised but have no commits, in which case
         # there's not much to report about it.  Is that the case here?
@@ -291,7 +295,12 @@ class GitRepo:
 
     def get_remote_state(self, fetch):
         """Get this repo's remote state - unpulled/unpushed commits."""
-        local_branch = self.repo.active_branch
+        try:
+            local_branch = self.repo.active_branch
+        except TypeError:
+            # Probably detached
+            self.has_remote = False
+            return
         remote_branch = local_branch.tracking_branch()
         if not remote_branch:
             self.has_remote = False
@@ -614,7 +623,7 @@ class FancyOutput(OutputBase):
         self.monochrome = monochrome
         self.clear = clear
         self.rows = {repo.name: i for i, repo in enumerate(repos)}
-        self.row0 = 2 # 1st row of table header: column names
+        self.row0 = 2  # 1st row of table header: column names
         self.row1 = self.row0 + 1  # 2nd row of table header: =====
 
     def initial(self):
