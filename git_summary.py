@@ -778,19 +778,12 @@ class AnsiWriter:
     @classmethod
     def _get_current_row(cls):
         """Try to learn cursor's row in terminal; return int or None (error)."""
-        # http://stackoverflow.com/a/2575525"
-        script = '\n'.join([
-            'exec < /dev/tty',
-            'oldstty=$(stty -g)',
-            'stty raw -echo min 0',
-            'echo -en "\033[6n" > /dev/tty',
-            "IFS=';' read -r -d R -a pos",
-            'stty $oldstty',
-            'row=$((${pos[0]:2} - 1))',
-            'echo $row'])
+        # https://unix.stackexchange.com/a/183121/181714
+        # via http://stackoverflow.com/a/2575525
+        script = "IFS=';' read -sdR -p $'\E[6n' ROW COL;echo \"${ROW#*[}\""
         try:
             p = subprocess.Popen(script, shell=True, stdout=subprocess.PIPE)
-            return int(p.communicate(timeout=1)[0].decode('utf-8').strip())
+            return int(p.communicate(timeout=1)[0].decode('utf-8').strip()) - 1
         except:
             return None
 
