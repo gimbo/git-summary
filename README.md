@@ -24,7 +24,7 @@ The built-in help is extensive, so either run the tool with the `--help` flag or
 
 ## Example output
 
-[![asciicast](https://asciinema.org/a/206565.png)](https://asciinema.org/a/206565)
+![Demo session SVG](https://gimbo.github.io/git-summary/git-summary-demo.svg "Demo Session SVG")
 
 ## Requirements
 
@@ -42,7 +42,7 @@ You could just download this repo and do `setup.py install`.  I recommend using
     ANSI shiz" may be less good, in particular the thing that tries to work out the cursor's position when the
     program starts (which is needed to get the fancy updates working) might fail.  But that's OK, you can always
     just disable it or fix it.  :-)
-    
+
   - [git-extras](https://github.com/tj/git-extras) contains a "git-summary" tool which does something entirely
     different.  Oops, my bad.  Ah well, never mind...
 
