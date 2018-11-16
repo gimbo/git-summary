@@ -54,9 +54,10 @@ The table includes the following information for each repo:
     v  unpulled commits
     ^  unpushed commits
 
-    00000  no commits in repo yet
-    --     no remote tracking branch
-    XX     error fetching from remote
+    00000    no commits in repo yet
+         --  no remote tracking branch
+         @@  tracking branch is gone on remote
+         XX  error fetching from remote
 
 * Optionally (--tracking/-t flag), remote/tracking branch names
 
@@ -240,6 +241,7 @@ class GitRepo:
         # remain None.
         self.remote_branch = None
         self.remote_name = None
+        self.remote_is_gone = None
         # This will become True if we try to do a git fetch and there's a
         # problem.
         self.fetch_failed = None
@@ -315,10 +317,25 @@ class GitRepo:
                 self.fetch_failed = True
                 return
         self.fetch_failed = False
+        self.remote_is_gone = self.check_if_remote_is_gone()
+        if self.remote_is_gone:
+            return
         self.has_unpulled_commits = self.git_log_cmp(
             local_branch, remote_branch)
         self.has_unpushed_commits = self.git_log_cmp(
             remote_branch, local_branch)
+
+    def check_if_remote_is_gone(self):
+        os.chdir(os.path.join(self.path, self.name))
+        try:
+            # If this command fails, the remote is gone.
+            sh.git((
+                'show-branch',
+                '{}/{}'.format(self.remote_name, self.remote_branch),
+            ))
+            return False
+        except sh.ErrorReturnCode:
+            return True
 
     def git_log_cmp(self, branch_1, branch_2):
         """Does branch_1 contain commits which aren't in branch_2?
@@ -469,6 +486,8 @@ class OutputBase:
         """Compute compact string representing state vs remote."""
         if not repo.has_remote:
             return '--'
+        if repo.remote_is_gone:
+            return '@@'
         if repo.fetch_failed:
             return 'XX'
         facts = (
