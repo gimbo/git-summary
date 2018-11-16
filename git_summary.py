@@ -462,12 +462,18 @@ class OutputBase:
     @property
     def max_repo_len(self):
         """Length of longest repo name."""
-        return max([len(repo_name) for repo_name in self.repos])
+        return max(
+            [len(HEADER_REPO)] +
+            [len(repo_name) for repo_name in self.repos]
+        )
 
     @property
     def max_branch_len(self):
         """Length of longest branch name."""
-        return max([len(repo.branch_name) for repo in self.repos.values()])
+        return max(
+            [len(HEADER_BRANCH)] +
+            [len(repo.branch_name) for repo in self.repos.values()]
+        )
 
     def local_state_string(self, repo):
         """Compute compact string representing local state."""
