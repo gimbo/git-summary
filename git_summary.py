@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
 import argparse
-from collections import OrderedDict
 import concurrent.futures as cf
-from itertools import zip_longest
 import os
 import subprocess
 import sys
+from collections import OrderedDict
+from itertools import zip_longest
 
 import colorama
 from colorama import (
@@ -14,13 +14,14 @@ from colorama import (
     Fore,
     Style,
 )
+
+import sh
 from git import (
     BadName,
     GitCommandError,
     InvalidGitRepositoryError,
     Repo,
 )
-import sh
 
 
 # Env var to look in for path to folder containing repos
@@ -252,19 +253,23 @@ class GitRepo:
     @property
     def local_dirty(self):
         """Is this repo's local git state dirty in some way?"""
-        return (self.has_commits and
-                any((self.has_untracked_files,
-                     self.has_new_files,
-                     self.has_unstaged_modifications,
-                     self.has_staged_modifications,
-                     self.has_renamed_files)))
+        return (self.has_commits
+                and any((
+                    self.has_untracked_files,
+                    self.has_new_files,
+                    self.has_unstaged_modifications,
+                    self.has_staged_modifications,
+                    self.has_renamed_files,
+                )))
 
     @property
     def remote_dirty(self):
         """Is this repo's remote git state dirty in some way?"""
-        return (self.has_remote and
-                any((self.has_unpulled_commits,
-                     self.has_unpushed_commits)))
+        return (self.has_remote
+                and any((
+                    self.has_unpulled_commits,
+                    self.has_unpushed_commits,
+                )))
 
     @property
     def tracking_branch(self):
@@ -463,16 +468,16 @@ class OutputBase:
     def max_repo_len(self):
         """Length of longest repo name."""
         return max(
-            [len(HEADER_REPO)] +
-            [len(repo_name) for repo_name in self.repos]
+            [len(HEADER_REPO)]
+            + [len(repo_name) for repo_name in self.repos]
         )
 
     @property
     def max_branch_len(self):
         """Length of longest branch name."""
         return max(
-            [len(HEADER_BRANCH)] +
-            [len(repo.branch_name) for repo in self.repos.values()]
+            [len(HEADER_BRANCH)]
+            + [len(repo.branch_name) for repo in self.repos.values()]
         )
 
     def local_state_string(self, repo):
@@ -669,8 +674,10 @@ class FancyOutput(OutputBase):
     @property
     def max_tracking_len(self):
         """Length of longest tracking branch name."""
-        return max([len(HEADER_TRACKING)] +
-                   [len(repo.tracking_branch) for repo in self.repos.values()])
+        return max(
+            [len(HEADER_TRACKING)]
+            + [len(repo.tracking_branch) for repo in self.repos.values()]
+        )
 
     @property
     def x_b(self):
@@ -805,11 +812,11 @@ class AnsiWriter:
         """Try to learn cursor's row in terminal; return int or None (error)."""
         # https://unix.stackexchange.com/a/183121/181714
         # via http://stackoverflow.com/a/2575525
-        script = "IFS=';' read -sdR -p $'\E[6n' ROW COL;echo \"${ROW#*[}\""
+        script = r"IFS=';' read -sdR -p $'\E[6n' ROW COL;echo \"${ROW#*[}\""
         try:
             p = subprocess.Popen(script, shell=True, stdout=subprocess.PIPE)
             return int(p.communicate(timeout=1)[0].decode('utf-8').strip()) - 1
-        except:
+        except Exception:
             return None
 
 
