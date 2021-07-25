@@ -9,19 +9,9 @@ from collections import OrderedDict
 from itertools import zip_longest
 
 import colorama
-from colorama import (
-    Back,
-    Fore,
-    Style,
-)
-
 import sh
-from git import (
-    BadName,
-    GitCommandError,
-    InvalidGitRepositoryError,
-    Repo,
-)
+from colorama import Back, Fore, Style
+from git import BadName, GitCommandError, InvalidGitRepositoryError, Repo
 
 
 # Env var to look in for path to folder containing repos
@@ -95,7 +85,9 @@ By default the tool runs concurrently, querying multiple repos in the
 background at once.  If desired, this can be disabled via the --sequential/-S
 flag.  It's somewhat slower, particular if also fetching from remotes.
 
-""".format(repos_path_env_var=REPOS_PATH_ENV_VAR)
+""".format(
+    repos_path_env_var=REPOS_PATH_ENV_VAR
+)
 
 
 HEADER_REPO = 'repo name'
@@ -122,15 +114,20 @@ def main():
         args.simple = True
 
     # Repos are folders which have .git folders inside them
-    candidates = [f for f in os.listdir(args.path)
-                  if os.path.isdir(os.path.join(args.path, f, '.git'))]
+    candidates = [
+        f
+        for f in os.listdir(args.path)
+        if os.path.isdir(os.path.join(args.path, f, '.git'))
+    ]
     # But we filter out any that aren't *really* git repos...
-    repos = [repo for repo in
-             [GitRepo.construct(args.path, c) for c in sorted(candidates)]
-             if repo]
+    repos = [
+        repo
+        for repo in [GitRepo.construct(args.path, c) for c in sorted(candidates)]
+        if repo
+    ]
 
     if not repos:
-        print('No git repos found at path: {}'.format(args.path))
+        print('No git repos found at path: {0}'.format(args.path))
         sys.exit(1)
 
     if args.simple:
@@ -154,41 +151,63 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=EPILOG)
+        epilog=EPILOG,
+    )
     repos_path = os.environ.get(REPOS_PATH_ENV_VAR, None)
     parser.add_argument(
-        'path', nargs='?', metavar='PATH', default=repos_path,
-        help=('Path to folder containing repos; default is from '
-              '{} env var ("{}")').format(REPOS_PATH_ENV_VAR, repos_path))
+        'path',
+        nargs='?',
+        metavar='PATH',
+        default=repos_path,
+        help=(
+            'Path to folder containing repos; default is from ' '{0} env var ("{1}")'
+        ).format(REPOS_PATH_ENV_VAR, repos_path),
+    )
     parser.add_argument(
-        '-t', '--tracking', action='store_true',
-        help='display tracking branch nane')
+        '-t', '--tracking', action='store_true', help='display tracking branch nane'
+    )
     parser.add_argument(
-        '-f', '--fetch', action='store_true',
-        help=("run a 'git fetch' on each repo before reporting its "
-              'remote status (this can be slow)'))
+        '-f',
+        '--fetch',
+        action='store_true',
+        help=(
+            "run a 'git fetch' on each repo before reporting its "
+            'remote status (this can be slow)'
+        ),
+    )
     parser.add_argument(
-        '-m', '--monochrome', action='store_true',
-        help="don't use colors in output")
+        '-m', '--monochrome', action='store_true', help="don't use colors in output"
+    )
     parser.add_argument(
-        '-s', '--simple', action='store_true',
-        help=('use simple output, i.e. write results sequentially '
-              'not concurrently. Always true if output is redirected '
-              'or piped. Implies -m'))
+        '-s',
+        '--simple',
+        action='store_true',
+        help=(
+            'use simple output, i.e. write results sequentially '
+            'not concurrently. Always true if output is redirected '
+            'or piped. Implies -m'
+        ),
+    )
     parser.add_argument(
-        '-c', '--clear', action='store_true',
-        help='always clear the screen in fancy output mode')
+        '-c',
+        '--clear',
+        action='store_true',
+        help='always clear the screen in fancy output mode',
+    )
     parser.add_argument(
-        '-S', '--sequential', action='store_true',
-        help=('check repo states sequentially, not concurrently '
-              '(slower but helpful in case of weirdness)'))
+        '-S',
+        '--sequential',
+        action='store_true',
+        help=(
+            'check repo states sequentially, not concurrently '
+            '(slower but helpful in case of weirdness)'
+        ),
+    )
 
     args = parser.parse_args()
     if not args.path:
-        print('No path specified, and none in {} env var'.format(
-            REPOS_PATH_ENV_VAR))
-        print('Run "{} -h" for more information'.format(
-            os.path.basename(sys.argv[0])))
+        print('No path specified, and none in {0} env var'.format(REPOS_PATH_ENV_VAR))
+        print('Run "{0} -h" for more information'.format(os.path.basename(sys.argv[0])))
         sys.exit(1)
     args.path = os.path.abspath(os.path.expanduser(args.path))
 
@@ -196,7 +215,6 @@ def parse_args():
 
 
 class GitRepo:
-
     @classmethod
     def construct(cls, path, name):
         """Factory method: if not a valid git repo, return None."""
@@ -253,23 +271,25 @@ class GitRepo:
     @property
     def local_dirty(self):
         """Is this repo's local git state dirty in some way?"""
-        return (self.has_commits
-                and any((
-                    self.has_untracked_files,
-                    self.has_new_files,
-                    self.has_unstaged_modifications,
-                    self.has_staged_modifications,
-                    self.has_renamed_files,
-                )))
+        return self.has_commits and any(
+            (
+                self.has_untracked_files,
+                self.has_new_files,
+                self.has_unstaged_modifications,
+                self.has_staged_modifications,
+                self.has_renamed_files,
+            )
+        )
 
     @property
     def remote_dirty(self):
         """Is this repo's remote git state dirty in some way?"""
-        return (self.has_remote
-                and any((
-                    self.has_unpulled_commits,
-                    self.has_unpushed_commits,
-                )))
+        return self.has_remote and any(
+            (
+                self.has_unpulled_commits,
+                self.has_unpushed_commits,
+            )
+        )
 
     @property
     def tracking_branch(self):
@@ -279,7 +299,7 @@ class GitRepo:
 
         """
         if self.remote_name and self.remote_branch:
-            return '{}/{}'.format(self.remote_name, self.remote_branch)
+            return '{0}/{1}'.format(self.remote_name, self.remote_branch)
         else:
             return ''
 
@@ -325,19 +345,19 @@ class GitRepo:
         self.remote_is_gone = self.check_if_remote_is_gone()
         if self.remote_is_gone:
             return
-        self.has_unpulled_commits = self.git_log_cmp(
-            local_branch, remote_branch)
-        self.has_unpushed_commits = self.git_log_cmp(
-            remote_branch, local_branch)
+        self.has_unpulled_commits = self.git_log_cmp(local_branch, remote_branch)
+        self.has_unpushed_commits = self.git_log_cmp(remote_branch, local_branch)
 
     def check_if_remote_is_gone(self):
         os.chdir(os.path.join(self.path, self.name))
         try:
             # If this command fails, the remote is gone.
-            sh.git((
-                'show-branch',
-                '{}/{}'.format(self.remote_name, self.remote_branch),
-            ))
+            sh.git(
+                (
+                    'show-branch',
+                    '{0}/{1}'.format(self.remote_name, self.remote_branch),
+                )
+            )
             return False
         except sh.ErrorReturnCode:
             return True
@@ -350,8 +370,12 @@ class GitRepo:
 
         """
         os.chdir(os.path.join(self.path, self.name))
-        args = ('--no-pager', 'log', '--format=oneline',
-                '{}..{}'.format(branch_1.name, branch_2.name))
+        args = (
+            '--no-pager',
+            'log',
+            '--format=oneline',
+            '{0}..{1}'.format(branch_1.name, branch_2.name),
+        )
         return bool(sh.git(args).stdout.decode('utf-8').strip())
 
 
@@ -407,8 +431,7 @@ class ConcurrentSummariser:
             repo = completed.result()
             # Set up a call to repo.get_remote_state in another process;
             # when it's done, tell the output to update repo's remote state.
-            future = self.submit(
-                self.executor, repo.get_remote_state, self.fetch)
+            future = self.submit(self.executor, repo.get_remote_state, self.fetch)
             self.add_callback(future, self.output.got_remote_state)
             remote_futures.append(future)
 
@@ -430,8 +453,7 @@ class ConcurrentSummariser:
         explicitly return self.
 
         """
-        return executor.submit(
-            cls.wrapped_repo_call, bound_method, *args, **kwargs)
+        return executor.submit(cls.wrapped_repo_call, bound_method, *args, **kwargs)
 
     @staticmethod
     def wrapped_repo_call(bound_method, *args, **kwargs):
@@ -467,10 +489,7 @@ class OutputBase:
     @property
     def max_repo_len(self):
         """Length of longest repo name."""
-        return max(
-            [len(HEADER_REPO)]
-            + [len(repo_name) for repo_name in self.repos]
-        )
+        return max([len(HEADER_REPO)] + [len(repo_name) for repo_name in self.repos])
 
     @property
     def max_branch_len(self):
@@ -519,7 +538,6 @@ class OutputBase:
 
 
 class SimpleOutput(OutputBase):
-
     def __init__(self, repos, path, tracking=False, *args, **kwargs):
         super().__init__(repos, path, tracking, *args, **kwargs)
         self.repos_locals = {repo.name: False for repo in repos}
@@ -541,7 +559,7 @@ class SimpleOutput(OutputBase):
 
     def write_header(self):
         """Write header rows of result table."""
-        print('git summary for {}'.format(self.path))
+        print('git summary for {0}'.format(self.path))
         print()
         self.print_repo_name(HEADER_REPO)
         self.print_branch_name(HEADER_BRANCH)
@@ -554,11 +572,11 @@ class SimpleOutput(OutputBase):
 
     def print_repo_name(self, repo_name):
         """Print appropriately-padded repo name."""
-        print(('{:<%d}  ' % self.max_repo_len).format(repo_name), end='')
+        print(('{0:<%d}  ' % self.max_repo_len).format(repo_name), end='')
 
     def print_branch_name(self, branch_name):
         """Print appropriately-padded branch name."""
-        print(('{:<%d}  ' % self.max_branch_len).format(branch_name), end='')
+        print(('{0:<%d}  ' % self.max_branch_len).format(branch_name), end='')
 
     def print_local_state(self, local_state):
         """Print appropriately-padded local state info."""
@@ -568,7 +586,7 @@ class SimpleOutput(OutputBase):
         """Print appropriately-padded remote state info."""
         print(remote_state, end='')
         if self.tracking:
-            print('  {}'.format(tracking_branch).rstrip())
+            print('  {0}'.format(tracking_branch).rstrip())
         else:
             print()
 
@@ -631,7 +649,8 @@ class SimpleOutput(OutputBase):
             if not self.repos_remotes[repo_name]:
                 return False  # Still don't have it; nothing to do.
             self.print_remote_state(
-                self.remote_state_string(repo), repo.tracking_branch)
+                self.remote_state_string(repo), repo.tracking_branch
+            )
             # We're done with this repo: move on the next (if any)
             next_repo_name = self.next_repos[repo_name]
             if next_repo_name is None:
@@ -647,8 +666,16 @@ class FancyOutput(OutputBase):
 
     """Fancy fast-updating output using ANSI escape codes."""
 
-    def __init__(self, repos, path, tracking=False,
-                 monochrome=False, clear=False, *args, **kwargs):
+    def __init__(
+        self,
+        repos,
+        path,
+        tracking=False,
+        monochrome=False,
+        clear=False,
+        *args,
+        **kwargs
+    ):
         super().__init__(repos, path, tracking, *args, **kwargs)
         self.monochrome = monochrome
         self.clear = clear
@@ -697,7 +724,7 @@ class FancyOutput(OutputBase):
     def write_header(self):
         """Write header rows of result table."""
         write = self.ansi.write_at
-        write(0, 0, 'git summary for {}'.format(self.path))
+        write(0, 0, 'git summary for {0}'.format(self.path))
         write(self.row0, 0, HEADER_REPO)
         write(self.row1, 0, HEADER_LINE * self.max_repo_len)
         write(self.row0, self.x_b, HEADER_BRANCH)
@@ -748,7 +775,7 @@ class FancyOutput(OutputBase):
         """Potentially wrap a string in colorising info."""
         if self.monochrome:
             return s
-        return '{}{}{}'.format(''.join(styles), s, Style.RESET_ALL)
+        return '{0}{1}{2}'.format(''.join(styles), s, Style.RESET_ALL)
 
 
 class AnsiWriter:
@@ -816,7 +843,7 @@ class AnsiWriter:
         try:
             p = subprocess.Popen(script, shell=True, stdout=subprocess.PIPE)
             return int(p.communicate(timeout=1)[0].decode('utf-8').strip()) - 1
-        except Exception:
+        except Exception:  # noqa: PIE786
             return None
 
 
